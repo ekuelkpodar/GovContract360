@@ -28,6 +28,9 @@ export default function SearchPage() {
     `/api/opportunities/search?q=${encodeURIComponent(query)}&agency=${filters.agency}&department=${filters.department}&naics=${filters.naics}&setAside=${filters.setAside}&noticeType=${filters.noticeType}&valueMin=${filters.valueMin}&valueMax=${filters.valueMax}&onlyActive=${filters.onlyActive}`,
     fetcher
   );
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [savedSearchName, setSavedSearchName] = useState('');
+  const [frequency, setFrequency] = useState('WEEKLY');
 
   useEffect(() => {
     const params = new URLSearchParams({
@@ -56,6 +59,23 @@ export default function SearchPage() {
     }
   };
 
+  const quickFilters = [
+    { label: 'My agencies', action: () => setFilters((f) => ({ ...f, agency: 'Department of Defense' })) },
+    { label: 'My set-asides', action: () => setFilters((f) => ({ ...f, setAside: 'Small Business' })) },
+    { label: 'High value', action: () => setFilters((f) => ({ ...f, valueMin: '1000000' })) },
+    { label: 'Closing soon', action: () => setFilters((f) => ({ ...f, noticeType: 'Solicitation' })) },
+    { label: 'New this week', action: () => setFilters((f) => ({ ...f, onlyActive: true })) }
+  ];
+
+  const saveSearch = async () => {
+    await fetch('/api/saved-searches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: savedSearchName, query, filters, frequency })
+    });
+    setShowSaveModal(false);
+  };
+
   return (
     <Layout>
       <div className="mx-auto max-w-6xl px-6 py-10">
@@ -63,6 +83,23 @@ export default function SearchPage() {
           <FilterSidebar filters={filters} setFilters={setFilters} />
           <div className="space-y-4">
             <SearchBar query={query} onQueryChange={setQuery} onSubmit={onSearch} useAI={useAI} onToggleAI={setUseAI} />
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {quickFilters.map((filter) => (
+                <button
+                  key={filter.label}
+                  onClick={filter.action}
+                  className="rounded-full border px-3 py-1 font-semibold text-slate-700 hover:border-brand-400 hover:text-brand-700"
+                >
+                  {filter.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setShowSaveModal(true)}
+                className="rounded-full border border-brand-200 px-3 py-1 font-semibold text-brand-700"
+              >
+                Save search
+              </button>
+            </div>
             <div className="space-y-3">
               {!data && <p className="text-sm text-slate-600">Loading results...</p>}
               {data && data.data.length === 0 && (
@@ -74,6 +111,38 @@ export default function SearchPage() {
             </div>
           </div>
         </div>
+        {showSaveModal && (
+          <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/30 p-4">
+            <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
+              <h3 className="text-lg font-semibold text-slate-900">Save this search</h3>
+              <div className="mt-3 space-y-3 text-sm">
+                <input
+                  className="w-full rounded border px-3 py-2"
+                  placeholder="Name"
+                  value={savedSearchName}
+                  onChange={(e) => setSavedSearchName(e.target.value)}
+                />
+                <select
+                  className="w-full rounded border px-3 py-2"
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value)}
+                >
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="MANUAL">Manual</option>
+                </select>
+              </div>
+              <div className="mt-4 flex justify-end gap-2 text-sm">
+                <button className="rounded border px-3 py-2" onClick={() => setShowSaveModal(false)}>
+                  Cancel
+                </button>
+                <button className="rounded bg-brand-600 px-3 py-2 font-semibold text-white" onClick={saveSearch}>
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

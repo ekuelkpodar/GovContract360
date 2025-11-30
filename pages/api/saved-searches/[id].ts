@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const updated = await prisma.savedSearch.update({
         where: { id },
-        data: { name, filters, frequency }
+        data: { name, filters, frequency: frequency ? frequency.toUpperCase() : undefined }
       });
       if (typeof isActive === 'boolean') {
         await prisma.alertSubscription.updateMany({ where: { savedSearchId: id }, data: { isActive } });

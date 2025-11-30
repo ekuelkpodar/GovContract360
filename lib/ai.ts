@@ -57,3 +57,29 @@ export async function rewriteSearchQuery(query: string) {
   const prompt = `Rewrite the following plain-language search query so it better matches SAM.gov keyword search while preserving intent: ${query}`;
   return callAI(prompt);
 }
+
+export async function recommendBidDecision({
+  opportunity,
+  companyProfileSummary,
+  riskScore,
+  fitScore,
+  context
+}: {
+  opportunity: Opportunity;
+  companyProfileSummary: string;
+  riskScore: number;
+  fitScore: number;
+  context?: string;
+}) {
+  const prompt = `You are a capture strategist. Given the opportunity below and the company profile, output a concise recommendation with one of: Strong Bid, Consider Carefully, Probably No-Bid. Include 3-5 bullet reasons.
+Fit score: ${fitScore}
+Risk score: ${riskScore}
+Company profile: ${companyProfileSummary}
+Opportunity: ${opportunity.title} for ${opportunity.agency} (${opportunity.noticeType}). Description: ${opportunity.description}
+Additional context: ${context || 'none provided'}
+Return JSON with fields { recommendation, reasoning }`;
+
+  const content = await callAI(prompt);
+  if (content.startsWith('{')) return JSON.parse(content);
+  return { recommendation: 'Consider Carefully', reasoning: content };
+}

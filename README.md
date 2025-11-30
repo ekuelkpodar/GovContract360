@@ -41,11 +41,20 @@ GovContract360 is a Next.js + TypeScript prototype for an AI-powered government 
 ## Feature highlights
 - Marketing pages: landing, solutions, pricing, wall of love, tools.
 - Auth flows: signup/login/logout issuing JWT cookies.
-- Search experience with filters, AI query rewrite toggle, and opportunity cards.
-- Opportunity detail with AI summary refresh, metadata, and quick actions.
-- Saved items, pipeline, alerts, and proposal generator pages for capture teams.
-- AI abstraction layer (`lib/ai.ts`) with endpoints for summaries, proposals, and query rewrite.
+- Search experience with filters, quick filters, saved search modal, AI query rewrite toggle, and opportunity cards.
+- Opportunity detail with AI summary refresh, bid/no-bid assistant scores, metadata, and quick actions.
+- Saved items, pipeline, alerts, onboarding, dashboard, tasks, and proposal generator pages for capture teams.
+- AI abstraction layer (`lib/ai.ts`) with endpoints for summaries, proposals, query rewrite, and bid decision guidance.
+
+## Folder structure
+- `components/` shared UI including layout and marketing pieces
+- `pages/` marketing, auth, onboarding, dashboard, search, tasks, and proposal views
+- `pages/api/` auth, onboarding, tasks, notifications, alerts, AI helpers, proposals, and search endpoints
+- `lib/` prisma client, auth helpers, scoring, AI abstraction, and logger
+- `prisma/` schema and seed data
+- `__tests__/` Jest unit and API smoke tests
 
 ## Notes
 - When Prisma or external APIs are unavailable, endpoints gracefully fall back to mock data where possible.
 - Replace mock data and prompts with production integrations as needed.
+- Demo users: `founder@example.com` / `password123` after running seed.

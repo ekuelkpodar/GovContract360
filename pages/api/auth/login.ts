@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = createToken({ userId: user.id, email: user.email, role: user.role });
+    const token = createToken({ userId: user.id, email: user.email, role: user.role, organizationId: user.organizationId });
     setAuthCookie(res, token);
 
     return res.status(200).json({ user: { id: user.id, email: user.email, name: user.name } });

@@ -5,6 +5,7 @@ import { Layout } from '../components/Layout';
 export default function Signup() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -14,10 +15,10 @@ export default function Signup() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name })
+      body: JSON.stringify({ email, password, name, companyName })
     });
     if (res.ok) {
-      Router.push('/search');
+      Router.push('/onboarding');
     } else {
       const body = await res.json();
       setError(body.error || 'Signup failed');
@@ -37,6 +38,15 @@ export default function Signup() {
               onChange={(e) => setName(e.target.value)}
               className="mt-1 w-full rounded border px-3 py-2"
               required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700">Company</label>
+            <input
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="mt-1 w-full rounded border px-3 py-2"
+              placeholder="Acme GovCon"
             />
           </div>
           <div>

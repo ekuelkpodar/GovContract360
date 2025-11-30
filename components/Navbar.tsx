@@ -1,7 +1,9 @@
 import Link from 'next/link';
 
 const navItems = [
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/search', label: 'Search' },
+  { href: '/tasks', label: 'Tasks' },
   { href: '/solutions', label: 'Solutions' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/wall-of-love', label: 'Wall of Love' },

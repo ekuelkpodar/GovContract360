@@ -11,6 +11,9 @@ interface Props {
 
 export default function OpportunityDetail({ opportunity }: Props) {
   const [summary, setSummary] = useState<string>('AI summary will appear here.');
+  const [fitScore, setFitScore] = useState<number | null>(null);
+  const [riskScore, setRiskScore] = useState<number | null>(null);
+  const [recommendation, setRecommendation] = useState<any>(null);
   if (!opportunity) {
     return (
       <Layout>
@@ -29,6 +32,18 @@ export default function OpportunityDetail({ opportunity }: Props) {
     });
     const body = await res.json();
     setSummary(body.summary);
+  };
+
+  const evaluateBid = async () => {
+    const res = await fetch('/api/ai/bid-decision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunityId: opportunity?.id })
+    });
+    const body = await res.json();
+    setFitScore(body.fitScore);
+    setRiskScore(body.riskScore);
+    setRecommendation(body.recommendation);
   };
 
   return (
@@ -76,6 +91,24 @@ export default function OpportunityDetail({ opportunity }: Props) {
                 </button>
               </div>
               <p className="mt-3 text-sm text-slate-700 whitespace-pre-line">{summary}</p>
+            </div>
+            <div className="rounded-lg border bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900">Bid / No-Bid Assistant</h3>
+                <button className="rounded bg-brand-600 px-3 py-1 text-xs font-semibold text-white" onClick={evaluateBid}>
+                  Evaluate
+                </button>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded border bg-brand-50 px-3 py-2">Fit score: {fitScore ?? '—'}</div>
+                <div className="rounded border bg-amber-50 px-3 py-2">Risk score: {riskScore ?? '—'}</div>
+              </div>
+              {recommendation && (
+                <div className="mt-3 space-y-2 rounded border px-3 py-2 text-sm">
+                  <p className="font-semibold text-slate-900">{recommendation.recommendation}</p>
+                  <p className="text-slate-700 whitespace-pre-line">{recommendation.reasoning}</p>
+                </div>
+              )}
             </div>
             <div className="rounded-lg border bg-white p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-slate-900">Details</h3>

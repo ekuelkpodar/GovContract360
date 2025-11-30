@@ -7,6 +7,7 @@ export interface AuthTokenPayload {
   userId: number;
   email: string;
   role: string;
+  organizationId?: number | null;
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'development-secret';
@@ -49,5 +50,5 @@ export async function verifyPassword(password: string, hash: string) {
 export async function getCurrentUser(req: NextApiRequest) {
   const payload = decodeTokenFromReq(req);
   if (!payload) return null;
-  return prisma.user.findUnique({ where: { id: payload.userId } });
+  return prisma.user.findUnique({ where: { id: payload.userId }, include: { organization: true } });
 }

@@ -10,7 +10,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { opportunityId, title, sections } = req.body;
     try {
       const draft = await prisma.proposalDraft.create({
-        data: { opportunityId, title, sections: sections || [], userId: user.userId, status: 'Draft' }
+        data: {
+          opportunityId,
+          title,
+          sections: sections || [],
+          userId: user.userId,
+          organizationId: user.organizationId || 1,
+          status: 'Draft',
+          version: 1
+        }
       });
       return res.status(200).json({ data: draft });
     } catch (err) {

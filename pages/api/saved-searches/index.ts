@@ -19,7 +19,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { name, query, filters, frequency } = req.body;
     try {
       const search = await prisma.savedSearch.create({
-        data: { name, query, filters: filters || {}, frequency: frequency || 'daily', userId: user.userId }
+        data: {
+          name,
+          query,
+          filters: filters || {},
+          frequency: (frequency || 'DAILY').toUpperCase(),
+          userId: user.userId,
+          organizationId: user.organizationId || 1
+        }
       });
       return res.status(200).json({ data: search });
     } catch (err) {

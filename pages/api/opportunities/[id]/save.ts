@@ -16,8 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           opportunityId: id
         }
       },
-      update: {},
-      create: { userId: user.userId, opportunityId: id, status: 'Evaluating' }
+      update: { organizationId: user.organizationId || 1 },
+      create: { userId: user.userId, organizationId: user.organizationId || 1, opportunityId: id, status: 'Evaluating' }
     });
 
     return res.status(200).json({ data: saved });
