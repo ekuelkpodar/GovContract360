@@ -50,6 +50,24 @@ export default function SearchPage() {
   const [activeView, setActiveView] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!router.isReady) return;
+    setQuery((router.query.q as string) || '');
+    setFilters((prev) => ({
+      ...prev,
+      agency: (router.query.agency as string) || '',
+      department: (router.query.department as string) || '',
+      naics: (router.query.naics as string) || '',
+      setAside: (router.query.setAside as string) || '',
+      noticeType: (router.query.noticeType as string) || '',
+      valueMin: (router.query.valueMin as string) || '',
+      valueMax: (router.query.valueMax as string) || '',
+      onlyActive: (router.query.onlyActive as string) === 'true'
+    }));
+    setPage(Number(router.query.page) || 1);
+    setPageSize(Number(router.query.pageSize) || 20);
+  }, [router.isReady, router.query]);
+
+  useEffect(() => {
     router.replace({ pathname: '/search', query: Object.fromEntries(searchParams.entries()) }, undefined, { shallow: true });
   }, [searchParams, router]);
 

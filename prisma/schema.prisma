@@ -139,6 +139,7 @@ model SavedOpportunity {
   statusEvents   OpportunityStatusEvent[]
 
   @@unique([userId, opportunityId])
+  @@index([organizationId, status])
 }
 
 model SavedSearch {
@@ -155,6 +156,8 @@ model SavedSearch {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   alerts     AlertSubscription[]
+
+  @@index([organizationId, frequency])
 }
 
 model AlertSubscription {
@@ -252,6 +255,9 @@ model Task {
   priority       TaskPriority @default(MEDIUM)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([organizationId, status])
+  @@index([assigneeUserId])
 }
 
 model Contact {
@@ -278,6 +284,8 @@ model Notification {
   isRead         Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([organizationId, userId, isRead])
 }
 
 model AlertRunLog {
@@ -288,6 +296,8 @@ model AlertRunLog {
   organizationId Int
   runAt          DateTime @default(now())
   matchesCount   Int
+
+  @@index([organizationId, runAt])
 }
 
 model ImportBatch {
@@ -303,6 +313,8 @@ model ImportBatch {
   failedRecords      Int
   createdAt          DateTime     @default(now())
   errors             ImportError[]
+
+  @@index([organizationId, createdAt])
 }
 
 model ImportError {
@@ -335,6 +347,8 @@ model OpportunityStatusEvent {
   changedBy         User             @relation(fields: [changedByUserId], references: [id])
   changedByUserId   Int
   changedAt         DateTime         @default(now())
+
+  @@index([changedAt])
 }
 
 model EmailStub {

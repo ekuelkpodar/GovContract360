@@ -49,27 +49,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       total = filtered.length;
     }
 
-    const facets = {
-      agencies: Object.entries(
-        results.reduce((acc: Record<string, number>, opp: any) => {
-          acc[opp.agency] = (acc[opp.agency] || 0) + 1;
-          return acc;
-        }, {})
-      ),
-      setAsides: Object.entries(
-        results.reduce((acc: Record<string, number>, opp: any) => {
-          if (!opp.setAside) return acc;
-          acc[opp.setAside] = (acc[opp.setAside] || 0) + 1;
-          return acc;
-        }, {})
-      ),
-      noticeTypes: Object.entries(
-        results.reduce((acc: Record<string, number>, opp: any) => {
-          acc[opp.noticeType] = (acc[opp.noticeType] || 0) + 1;
-          return acc;
-        }, {})
-      )
-    };
+    // Facets should reflect the full result set, not just the current page. Fall back to current page counts if grouping fails.
+    let facets = { agencies: [] as any[], setAsides: [] as any[], noticeTypes: [] as any[] };
+    try {
+      const [agencyBuckets, setAsideBuckets, noticeBuckets] = await Promise.all([
+        prisma.opportunity.groupBy({ by: ['agency'], where: conditions.where, _count: { _all: true } }),
+        prisma.opportunity.groupBy({ by: ['setAside'], where: conditions.where, _count: { _all: true } }),
+        prisma.opportunity.groupBy({ by: ['noticeType'], where: conditions.where, _count: { _all: true } })
+      ]);
+      facets = {
+        agencies: agencyBuckets.map((bucket) => [bucket.agency, bucket._count._all]),
+        setAsides: setAsideBuckets
+          .filter((bucket) => bucket.setAside)
+          .map((bucket) => [bucket.setAside, bucket._count._all]),
+        noticeTypes: noticeBuckets.map((bucket) => [bucket.noticeType, bucket._count._all])
+      };
+    } catch (facetError) {
+      console.warn('Facet grouping fallback due to prisma error', facetError);
+      facets = {
+        agencies: Object.entries(
+          results.reduce((acc: Record<string, number>, opp: any) => {
+            acc[opp.agency] = (acc[opp.agency] || 0) + 1;
+            return acc;
+          }, {})
+        ),
+        setAsides: Object.entries(
+          results.reduce((acc: Record<string, number>, opp: any) => {
+            if (!opp.setAside) return acc;
+            acc[opp.setAside] = (acc[opp.setAside] || 0) + 1;
+            return acc;
+          }, {})
+        ),
+        noticeTypes: Object.entries(
+          results.reduce((acc: Record<string, number>, opp: any) => {
+            acc[opp.noticeType] = (acc[opp.noticeType] || 0) + 1;
+            return acc;
+          }, {})
+        )
+      };
+    }
 
     return res.status(200).json({ data: results, total, page: pageNumber, pageSize: pageSizeNumber, facets });
   } catch (err) {

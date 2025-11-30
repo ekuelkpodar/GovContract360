@@ -8,6 +8,11 @@ async function callAI(prompt: string): Promise<string> {
     return `AI response (mocked) for prompt: ${prompt.substring(0, 120)}...`;
   }
 
+  if (typeof fetch === 'undefined') {
+    console.warn('Global fetch unavailable in this environment; returning mocked response.');
+    return `AI response (mocked) for prompt: ${prompt.substring(0, 120)}...`;
+  }
+
   const body = {
     model,
     messages: [{ role: 'user', content: prompt }]

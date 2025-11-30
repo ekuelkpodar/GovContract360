@@ -65,3 +65,10 @@ GovContract360 is a Next.js + TypeScript prototype for an AI-powered government 
 - When Prisma or external APIs are unavailable, endpoints gracefully fall back to mock data where possible.
 - Replace mock data and prompts with production integrations as needed.
 - Demo users: `founder@example.com` / `password123` after running seed.
+
+## Resolving merge conflicts
+If your branch shows merge conflicts (for example in `README.md`, `lib/ai.ts`, or the search-related files), resolve them locally:
+1. Pull the latest main branch: `git checkout main && git pull`.
+2. Rebase or merge your feature branch: `git checkout <branch> && git merge main`.
+3. Fix conflict markers in the files listed by Git, rerun formatting or linting if available, and commit the resolved versions.
+4. Rerun tests (`npm test`) to ensure conflict resolution didn’t introduce regressions.
