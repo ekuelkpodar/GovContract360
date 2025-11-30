@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { prisma } from '../../lib/prisma';
-import { Opportunity } from '@prisma/client';
+import type { Opportunity } from '@prisma/client';
 import { Layout } from '../../components/Layout';
 
 interface Props {

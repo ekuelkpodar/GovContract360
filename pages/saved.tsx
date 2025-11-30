@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { Layout } from '../components/Layout';
-import { Opportunity } from '@prisma/client';
+import type { Opportunity } from '@prisma/client';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Opportunity } from '@prisma/client';
+import type { Opportunity } from '@prisma/client';
 
 export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   return (

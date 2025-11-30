@@ -1,7 +1,7 @@
 import { GetServerSideProps } from 'next';
 import { Layout } from '../../components/Layout';
 import { prisma } from '../../lib/prisma';
-import { Opportunity } from '@prisma/client';
+import type { Opportunity } from '@prisma/client';
 import Link from 'next/link';
 import { useState } from 'react';
 
