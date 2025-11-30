@@ -1,0 +1,393 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  CONTRIBUTOR
+  MEMBER
+  VIEWER
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProposalStatus {
+  Draft
+  Finalized
+  Archived
+}
+
+enum SavedSearchFrequency {
+  DAILY
+  WEEKLY
+  MANUAL
+}
+
+model Organization {
+  id                   Int                 @id @default(autoincrement())
+  name                 String
+  primaryContactUserId Int?
+  users                User[]
+  companyProfiles      CompanyProfile[]
+  savedOpportunities   SavedOpportunity[]
+  savedSearches        SavedSearch[]
+  proposalDrafts       ProposalDraft[]
+  notifications        Notification[]
+  tasks                Task[]
+  contacts             Contact[]
+  alertRunLogs         AlertRunLog[]
+  settings             OrganizationSettings?
+  importBatches        ImportBatch[]
+  savedViews           SavedView[]
+  emailStubs           EmailStub[]
+  calendarEvents       CalendarEventStub[]
+  plans                Subscription[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(MEMBER)
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  organizationId Int?
+  onboardingCompleted Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  savedOpportunities SavedOpportunity[]
+  savedSearches      SavedSearch[]
+  alertSubscriptions AlertSubscription[]
+  proposalDrafts     ProposalDraft[]
+  companyProfiles    CompanyProfile[]
+  opportunityNotes   OpportunityNote[] @relation("OpportunityNoteAuthor")
+  tasks              Task[]            @relation("TaskAssignee")
+  notifications      Notification[]
+  savedViews         SavedView[]
+}
+
+model Opportunity {
+  id                 String   @id @default(uuid())
+  samId              String?
+  externalId         String?
+  title              String
+  agency             String
+  department         String?
+  solicitationNumber String
+  noticeType         String
+  naicsCodes         String[]
+  pscCodes           String[]
+  setAside           String?
+  placeOfPerformance String?
+  estimatedValueMin  Float?
+  estimatedValueMax  Float?
+  responseDeadline   DateTime
+  postedDate         DateTime
+  url                String
+  description        String
+  rawText            String
+  status             String   @default("Open")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  savedItems         SavedOpportunity[]
+  proposalDrafts     ProposalDraft[]
+  attachments        Attachment[]
+  notes              OpportunityNote[]
+  tasks              Task[]
+  statusEvents       OpportunityStatusEvent[]
+}
+
+model SavedOpportunity {
+  id             Int      @id @default(autoincrement())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id])
+  opportunityId  String
+  status         String   @default("Evaluating")
+  notes          String?
+  priority       String   @default("medium")
+  fitScore       Int?
+  riskScore      Int?
+  lastEvaluatedAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  statusEvents   OpportunityStatusEvent[]
+
+  @@unique([userId, opportunityId])
+}
+
+model SavedSearch {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  organization Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  name       String
+  query      String
+  filters    Json
+  frequency  SavedSearchFrequency
+  lastRunAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  alerts     AlertSubscription[]
+}
+
+model AlertSubscription {
+  id             Int      @id @default(autoincrement())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         Int
+  savedSearch    SavedSearch @relation(fields: [savedSearchId], references: [id])
+  savedSearchId  Int
+  deliveryChannel String   @default("email")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ProposalDraft {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+  opportunityId String
+  title         String
+  sections      Json
+  status        ProposalStatus   @default(Draft)
+  templateName  String?
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Attachment {
+  id            Int      @id @default(autoincrement())
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+  opportunityId String
+  fileName      String
+  fileType      String
+  fileSize      Int
+  url           String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CompanyProfile {
+  id                 Int      @id @default(autoincrement())
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  organizationId     Int
+  owner              User     @relation(fields: [userId], references: [id])
+  userId             Int
+  companyName        String
+  website            String?
+  size               String?
+  primaryNaics       String?
+  primaryPsc         String?
+  capabilities       Json?
+  keywords           String[]
+  preferredAgencies  String[]
+  preferredSetAsides String[]
+  preferredNoticeTypes String[]
+  typicalValueMin    Float?
+  typicalValueMax    Float?
+  baseLocation       String?
+  maxDistanceMiles   Int?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([organizationId])
+}
+
+model OpportunityNote {
+  id             Int      @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id])
+  opportunityId  String
+  author         User     @relation("OpportunityNoteAuthor", fields: [authorUserId], references: [id])
+  authorUserId   Int
+  content        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Task {
+  id             Int      @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  opportunity    Opportunity? @relation(fields: [opportunityId], references: [id])
+  opportunityId  String?
+  assignee       User?    @relation("TaskAssignee", fields: [assigneeUserId], references: [id])
+  assigneeUserId Int?
+  title          String
+  description    String?
+  dueDate        DateTime?
+  status         TaskStatus @default(OPEN)
+  priority       TaskPriority @default(MEDIUM)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Contact {
+  id             Int      @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  name           String
+  email          String?
+  company        String?
+  role           String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Notification {
+  id             Int      @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  user           User     @relation(fields: [userId], references: [id])
+  userId         Int
+  type           String
+  payload        Json
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model AlertRunLog {
+  id             Int      @id @default(autoincrement())
+  savedSearch    SavedSearch @relation(fields: [savedSearchId], references: [id])
+  savedSearchId  Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  runAt          DateTime @default(now())
+  matchesCount   Int
+}
+
+model ImportBatch {
+  id                 Int          @id @default(autoincrement())
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  organizationId     Int
+  type               String
+  sourceLabel        String
+  createdBy          User         @relation(fields: [createdByUserId], references: [id])
+  createdByUserId    Int
+  totalRecords       Int
+  successfulRecords  Int
+  failedRecords      Int
+  createdAt          DateTime     @default(now())
+  errors             ImportError[]
+}
+
+model ImportError {
+  id             Int          @id @default(autoincrement())
+  importBatch    ImportBatch  @relation(fields: [importBatchId], references: [id])
+  importBatchId  Int
+  rowNumber      Int
+  errorMessage   String
+  rawRowData     Json
+}
+
+model SavedView {
+  id             Int          @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  user           User         @relation(fields: [userId], references: [id])
+  userId         Int
+  name           String
+  config         Json
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model OpportunityStatusEvent {
+  id                Int              @id @default(autoincrement())
+  savedOpportunity  SavedOpportunity @relation(fields: [savedOpportunityId], references: [id])
+  savedOpportunityId Int
+  fromStatus        String?
+  toStatus          String
+  changedBy         User             @relation(fields: [changedByUserId], references: [id])
+  changedByUserId   Int
+  changedAt         DateTime         @default(now())
+}
+
+model EmailStub {
+  id             Int          @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  from           String
+  subject        String
+  body           String
+  receivedAt     DateTime @default(now())
+}
+
+model CalendarEventStub {
+  id             Int          @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  title          String
+  start          DateTime
+  end            DateTime
+  externalId     String?
+  source         String @default("MANUAL")
+  createdAt      DateTime @default(now())
+}
+
+model OrganizationSettings {
+  id                       Int          @id @default(autoincrement())
+  organization             Organization @relation(fields: [organizationId], references: [id])
+  organizationId           Int          @unique
+  aiPreferences            Json?
+  notificationPreferences  Json?
+  defaultAgencies          String[]
+  defaultValueRangeMin     Float?
+  defaultValueRangeMax     Float?
+  timezone                 String?
+  workWeek                 String?
+}
+
+model Plan {
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  priceMonthly         Float
+  priceYearly          Float
+  features             Json
+  maxUsers             Int
+  maxSavedSearches     Int
+  maxOpportunitiesTracked Int
+  subscriptions        Subscription[]
+}
+
+model Subscription {
+  id             Int          @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  plan           Plan         @relation(fields: [planId], references: [id])
+  planId         Int
+  status         String
+  currentPeriodEnd DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
