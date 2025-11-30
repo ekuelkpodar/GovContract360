@@ -118,6 +118,7 @@ model Opportunity {
   @@index([agency])
   @@index([noticeType])
   @@index([responseDeadline])
+  @@index([setAside])
 }
 
 model SavedOpportunity {

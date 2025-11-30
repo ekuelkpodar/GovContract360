@@ -68,6 +68,7 @@ export default function SearchPage() {
   }, [router.isReady, router.query]);
 
   useEffect(() => {
+    if (!router.isReady) return;
     router.replace({ pathname: '/search', query: Object.fromEntries(searchParams.entries()) }, undefined, { shallow: true });
   }, [searchParams, router]);
 
@@ -142,6 +143,7 @@ export default function SearchPage() {
                       key={view.id}
                       onClick={() => {
                         setActiveView(view.id);
+                        setPage(1);
                         setQuery(view.config.query || '');
                         setFilters({ ...filters, ...(view.config.filters || {}) });
                       }}

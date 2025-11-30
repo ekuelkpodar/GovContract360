@@ -44,7 +44,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         prisma.opportunity.count({ where: conditions.where })
       ]);
     } catch (err) {
-      const filtered = mockOpportunities.filter((opp) => opp.title.toLowerCase().includes(String(q).toLowerCase()));
+      const applyFilter = (opp: any) => {
+        const textMatch = String(q)
+          .toLowerCase()
+          .split(' ')
+          .every((token) => opp.title.toLowerCase().includes(token) || opp.description.toLowerCase().includes(token));
+        const agencyMatch = agency ? opp.agency.toLowerCase().includes(String(agency).toLowerCase()) : true;
+        const departmentMatch = department
+          ? (opp.department || '').toLowerCase().includes(String(department).toLowerCase())
+          : true;
+        const naicsMatch = naics ? (opp.naicsCodes || []).includes(String(naics)) : true;
+        const setAsideMatch = setAside
+          ? (opp.setAside || '').toLowerCase().includes(String(setAside).toLowerCase())
+          : true;
+        const noticeMatch = noticeType ? opp.noticeType === noticeType : true;
+        const valueMinMatch = valueMin ? Number(opp.estimatedValueMin || 0) >= Number(valueMin) : true;
+        const valueMaxMatch = valueMax ? Number(opp.estimatedValueMax || 0) <= Number(valueMax) : true;
+        const activeMatch = onlyActive === 'true' ? opp.status === 'Open' : true;
+        return (
+          textMatch &&
+          agencyMatch &&
+          departmentMatch &&
+          naicsMatch &&
+          setAsideMatch &&
+          noticeMatch &&
+          valueMinMatch &&
+          valueMaxMatch &&
+          activeMatch
+        );
+      };
+
+      const filtered = mockOpportunities.filter(applyFilter);
       results = filtered.slice((pageNumber - 1) * pageSizeNumber, pageNumber * pageSizeNumber);
       total = filtered.length;
     }

@@ -90,8 +90,18 @@ Additional context: ${context || 'none provided'}
 Return JSON with fields { recommendation, reasoning }`;
 
   const content = await callAI(prompt);
-  if (content.startsWith('{')) return JSON.parse(content);
-  return { recommendation: 'Consider Carefully', reasoning: content };
+  if (content.startsWith('{')) {
+    try {
+      return JSON.parse(content);
+    } catch (error) {
+      console.warn('Failed to parse bid decision JSON', error, content);
+    }
+  }
+
+  return {
+    recommendation: 'Consider Carefully',
+    reasoning: content.trim() || 'AI service unavailable; defaulting to a cautious recommendation.'
+  };
 }
 
 export interface GapAnalysisResult {
