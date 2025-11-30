@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("user")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  savedOpportunities SavedOpportunity[]
+  savedSearches      SavedSearch[]
+  alertSubscriptions AlertSubscription[]
+  proposalDrafts     ProposalDraft[]
+}
+
+model Opportunity {
+  id                 String   @id @default(uuid())
+  samId              String?
+  externalId         String?
+  title              String
+  agency             String
+  department         String?
+  solicitationNumber String
+  noticeType         String
+  naicsCodes         String[]
+  pscCodes           String[]
+  setAside           String?
+  placeOfPerformance String?
+  estimatedValueMin  Float?
+  estimatedValueMax  Float?
+  responseDeadline   DateTime
+  postedDate         DateTime
+  url                String
+  description        String
+  rawText            String
+  status             String   @default("Open")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  savedItems         SavedOpportunity[]
+  proposalDrafts     ProposalDraft[]
+  attachments        Attachment[]
+}
+
+model SavedOpportunity {
+  id             Int      @id @default(autoincrement())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         Int
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id])
+  opportunityId  String
+  status         String   @default("Evaluating")
+  notes          String?
+  priority       String   @default("medium")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, opportunityId])
+}
+
+model SavedSearch {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  name       String
+  query      String
+  filters    Json
+  frequency  String
+  lastRunAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  alerts     AlertSubscription[]
+}
+
+model AlertSubscription {
+  id             Int      @id @default(autoincrement())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         Int
+  savedSearch    SavedSearch @relation(fields: [savedSearchId], references: [id])
+  savedSearchId  Int
+  deliveryChannel String   @default("email")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ProposalDraft {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+  opportunityId String
+  title         String
+  sections      Json
+  status        String   @default("Draft")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Attachment {
+  id            Int      @id @default(autoincrement())
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+  opportunityId String
+  fileName      String
+  fileType      String
+  fileSize      Int
+  url           String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
