@@ -7,6 +7,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   const { q = '', agency, department, naics, setAside, noticeType, valueMin, valueMax, onlyActive, page = 1, pageSize = 20 } =
     req.query;
+  const pageNumber = Math.max(1, Number(page) || 1);
+  const pageSizeNumber = Math.max(1, Math.min(100, Number(pageSize) || 20));
 
   try {
     const parsed = parseQuery(String(q));
@@ -30,8 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ]
       },
       orderBy: { postedDate: 'desc' },
-      take: Number(pageSize),
-      skip: (Number(page) - 1) * Number(pageSize)
+      take: pageSizeNumber,
+      skip: (pageNumber - 1) * pageSizeNumber
     };
 
     let results = [];
@@ -43,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ]);
     } catch (err) {
       const filtered = mockOpportunities.filter((opp) => opp.title.toLowerCase().includes(String(q).toLowerCase()));
-      results = filtered.slice(0, Number(pageSize));
+      results = filtered.slice((pageNumber - 1) * pageSizeNumber, pageNumber * pageSizeNumber);
       total = filtered.length;
     }
 
@@ -69,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       )
     };
 
-    return res.status(200).json({ data: results, total, page: Number(page), pageSize: Number(pageSize), facets });
+    return res.status(200).json({ data: results, total, page: pageNumber, pageSize: pageSizeNumber, facets });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Failed to search opportunities' });

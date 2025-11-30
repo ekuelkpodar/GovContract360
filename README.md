@@ -41,7 +41,7 @@ GovContract360 is a Next.js + TypeScript prototype for an AI-powered government 
 ## Feature highlights
 - Marketing pages: landing, solutions, pricing, wall of love, tools.
 - Auth flows: signup/login/logout issuing JWT cookies.
-- Search experience with filters, quick filters, saved search modal, AI query rewrite toggle, and opportunity cards.
+- Search experience with filters, quick filters, saved search modal, AI query rewrite toggle, pagination, and opportunity cards.
 - Opportunity detail with AI summary refresh, bid/no-bid assistant scores, metadata, and quick actions.
 - Saved items, pipeline, alerts, onboarding, dashboard, tasks, and proposal generator pages for capture teams.
 - AI abstraction layer (`lib/ai.ts`) with endpoints for summaries, proposals, query rewrite, and bid decision guidance.

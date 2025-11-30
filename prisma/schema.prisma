@@ -114,6 +114,10 @@ model Opportunity {
   notes              OpportunityNote[]
   tasks              Task[]
   statusEvents       OpportunityStatusEvent[]
+
+  @@index([agency])
+  @@index([noticeType])
+  @@index([responseDeadline])
 }
 
 model SavedOpportunity {

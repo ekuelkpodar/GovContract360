@@ -13,21 +13,26 @@ async function callAI(prompt: string): Promise<string> {
     messages: [{ role: 'user', content: prompt }]
   };
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify(body)
-  });
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify(body)
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to reach AI provider');
+    if (!response.ok) {
+      throw new Error(`AI provider error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+  } catch (error) {
+    console.error('AI call failed', error);
+    return 'AI service unavailable; using fallback guidance.';
   }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || '';
 }
 
 export async function summarizeOpportunity(rawText: string, metadata: Record<string, string>) {

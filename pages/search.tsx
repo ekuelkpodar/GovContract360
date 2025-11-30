@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
 import { Layout } from '../components/Layout';
@@ -23,11 +23,26 @@ export default function SearchPage() {
     valueMax: (router.query.valueMax as string) || '',
     onlyActive: (router.query.onlyActive as string) === 'true'
   });
+  const [page, setPage] = useState(Number(router.query.page) || 1);
+  const [pageSize, setPageSize] = useState(Number(router.query.pageSize) || 20);
 
-  const { data } = useSWR<{ data: Opportunity[]; total: number; facets?: any }>(
-    `/api/opportunities/search?q=${encodeURIComponent(query)}&agency=${filters.agency}&department=${filters.department}&naics=${filters.naics}&setAside=${filters.setAside}&noticeType=${filters.noticeType}&valueMin=${filters.valueMin}&valueMax=${filters.valueMax}&onlyActive=${filters.onlyActive}`,
-    fetcher
-  );
+  const searchParams = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('q', query);
+    if (filters.agency) params.set('agency', filters.agency);
+    if (filters.department) params.set('department', filters.department);
+    if (filters.naics) params.set('naics', filters.naics);
+    if (filters.setAside) params.set('setAside', filters.setAside);
+    if (filters.noticeType) params.set('noticeType', filters.noticeType);
+    if (filters.valueMin) params.set('valueMin', filters.valueMin);
+    if (filters.valueMax) params.set('valueMax', filters.valueMax);
+    if (filters.onlyActive) params.set('onlyActive', 'true');
+    params.set('page', String(page));
+    params.set('pageSize', String(pageSize));
+    return params;
+  }, [query, filters, page, pageSize]);
+
+  const { data } = useSWR<{ data: Opportunity[]; total: number; facets?: any }>(`/api/opportunities/search?${searchParams.toString()}`, fetcher);
   const { data: savedViews } = useSWR('/api/saved-views', fetcher);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedSearchName, setSavedSearchName] = useState('');
@@ -35,19 +50,8 @@ export default function SearchPage() {
   const [activeView, setActiveView] = useState<number | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams({
-      q: query,
-      agency: filters.agency,
-      department: filters.department,
-      naics: filters.naics,
-      setAside: filters.setAside,
-      noticeType: filters.noticeType,
-      valueMin: filters.valueMin,
-      valueMax: filters.valueMax,
-      onlyActive: String(filters.onlyActive)
-    });
-    router.replace({ pathname: '/search', query: params.toString() }, undefined, { shallow: true });
-  }, [query, filters, router]);
+    router.replace({ pathname: '/search', query: Object.fromEntries(searchParams.entries()) }, undefined, { shallow: true });
+  }, [searchParams, router]);
 
   const onSearch = async () => {
     if (useAI && query) {
@@ -68,6 +72,10 @@ export default function SearchPage() {
     { label: 'Closing soon', action: () => setFilters((f) => ({ ...f, noticeType: 'Solicitation' })) },
     { label: 'New this week', action: () => setFilters((f) => ({ ...f, onlyActive: true })) }
   ];
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, filters]);
 
   const saveSearch = async () => {
     await fetch('/api/saved-searches', {
@@ -164,6 +172,46 @@ export default function SearchPage() {
               {data?.data.map((opportunity) => (
                 <OpportunityCard key={opportunity.id} opportunity={opportunity} />
               ))}
+              {data && data.total > pageSize && (
+                <div className="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="rounded border px-2 py-1 disabled:opacity-50"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="rounded border px-2 py-1 disabled:opacity-50"
+                      onClick={() =>
+                        setPage((p) =>
+                          Math.min(Math.ceil(data.total / pageSize), p + 1)
+                        )
+                      }
+                      disabled={page >= Math.ceil(data.total / pageSize)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Page {page} of {Math.max(1, Math.ceil(data.total / pageSize))}
+                    </span>
+                    <select
+                      className="rounded border px-2 py-1"
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                    >
+                      {[10, 20, 50].map((size) => (
+                        <option key={size} value={size}>
+                          {size} / page
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
