@@ -51,6 +51,7 @@ model Organization {
   tasks                Task[]
   contacts             Contact[]
   alertRunLogs         AlertRunLog[]
+  opportunityNotes     OpportunityNote[]
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 }
@@ -140,6 +141,7 @@ model SavedSearch {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   alerts     AlertSubscription[]
+  alertRunLogs AlertRunLog[]
 }
 
 model AlertSubscription {

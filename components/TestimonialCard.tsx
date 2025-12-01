@@ -7,7 +7,7 @@ interface TestimonialProps {
 
 export function TestimonialCard({ name, role, company, quote }: TestimonialProps) {
   return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border bg-white p-5 shadow-sm ring-1 ring-slate-100">
       <p className="text-sm text-slate-700">“{quote}”</p>
       <div className="mt-4 text-xs font-semibold text-slate-600">
         {name} • {role}, {company}
